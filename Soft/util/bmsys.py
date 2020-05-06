@@ -29,7 +29,8 @@ def beam_map_func(bmfile, fp, mmp, chind, sopt=False):
 	xc = (xca + xcb) / 2.
 	yc = (yca + ycb) / 2.
 
-	if bmfile=='':
+	if bmfile is None:
+		# if the beam map filename is None, we will genrate the beam pattern
 		bmsysp = BeamSysParams(fp, mmp, sopt)
 		dg = bmsysp.delta_g[chind]
 		sigma = bmsysp.sigma[chind]
@@ -51,10 +52,9 @@ def beam_map_func(bmfile, fp, mmp, chind, sopt=False):
 		#plt.scatter(x, y, s=4)
 		#plt.show()
 
-		Ba = np.exp(-1./(2*sigma_a**2)*((x-(xca))**2/(1+pa)+(y-(yca))**2/(1-pa)))\
-   	    +np.exp(-1./(2*sigma_a**2)*((x-(xca))**2+(y-(yca))**2-2*ca*(x-(xca))*(y-(yca))))
-		Bb = np.exp(-1./(2*sigma_b**2)*((x-(xcb))**2/(1+pb)+(y-(ycb))**2/(1-pb)))\
-   	    +np.exp(-1./(2*sigma_b**2)*((x-(xcb))**2+(y-(ycb))**2-2*cb*(x-(xcb))*(y-(ycb))))
+		Ba = 1./(2*np.pi*sigma_a**2)*(np.exp(-1. / (2 * sigma_a ** 2) * ((x - (xca)) ** 2 / (1 + pa) + (y - (yca)) ** 2 / (1 - pa)- 2 * ca * (x - (xca)) * (y - (yca)))))
+		Bb = 1. / (2 * np.pi * sigma_b ** 2) * (np.exp(-1. / (2 * sigma_b ** 2) * (
+					(x - (xcb)) ** 2 / (1 + pb) + (y - (ycb)) ** 2 / (1 - pb) - 2 * cb * (x - (xcb)) * (y - (ycb)))))
 		# Ba = np.exp(-1. / (2 * sigma_a ** 2) * ((x - (xca)) ** 2 + (y - (yca)) ** 2))
 		# Bb = np.exp(-1. / (2 * sigma_b ** 2) * ((x - (xcb)) ** 2 + (y - (ycb)) ** 2))
 		# Ba = Ba/np.sum(Ba)*ga; Bb = Bb/np.sum(Bb)*gb
@@ -63,6 +63,7 @@ def beam_map_func(bmfile, fp, mmp, chind, sopt=False):
 		#Ba = Ba+np.random.normal(0, Bamax/50., np.shape(Ba))
 		#Bb = Bb+np.random.normal(0, Bbmax/50., np.shape(Bb))
 	else:
+		# else, we will load the beam map
 		RBM = loadh5(bmfile, opt=['xgrid', 'ygrid', 'Ba', 'Bb'])
 		xgrid = RBM.xgrid
 		ygrid = RBM.ygrid
@@ -93,11 +94,24 @@ def beam_map_func(bmfile, fp, mmp, chind, sopt=False):
 		beam_map.saveh5(filename=filename, opt=['Ba'])
 	return beam_map
 
-def bm_func(x, sigma, A):
-	tmp = int(len(x)/2)
-	bm_x = x[0:tmp]
-	bm_y = x[tmp:]
-	B = A*np.exp(-1. / (2 * sigma ** 2) * ((bm_x) ** 2 + (bm_y) ** 2))
+def bm_func(bm_data, *args):
+	bm_x = bm_data.bm_x.flatten()
+	bm_y = bm_data.bm_y.flatten()
+	A = args[0]
+	# print(A)
+	sigma = args[1]
+	xc = args[2]
+	yc = args[3]
+	p = args[4]
+	c = args[5]
+	# xc = 0
+	# yc = 0
+	# p = 0
+	# c = 0
+	# B = A/(np.sqrt(2*np.pi)*sigma)*np.exp(-1. / (2 * sigma ** 2) * ((bm_x) ** 2 + (bm_y) ** 2))
+	# B = A/(2*np.pi*sigma**2)*(np.exp(-1. / (2 * sigma ** 2) * ((bm_x - (xc)) ** 2 / (1 + p) + (bm_y - (yc)) ** 2 / (1 - p))) \
+	# + np.exp(-1. / (2 * sigma ** 2) * ((bm_x - (xc)) ** 2 + (bm_y - (yc)) ** 2 - 2 * c * (bm_x - (xc)) * (bm_y - (yc)))))
+	B = A/(2*np.pi*sigma**2)*(np.exp(-1. / (2 * sigma ** 2) * ((bm_x - (xc)) ** 2 / (1 + p) + (bm_y - (yc)) ** 2 / (1 - p)- 2 * c * (bm_x - (xc)) * (bm_y - (yc)))))
 	return B
 
 def beamplot(x, y, Ba, Bb):
