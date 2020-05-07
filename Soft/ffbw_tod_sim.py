@@ -47,6 +47,15 @@ def ground_pickup(tod, chidx, pltopt=False):
         plt.plot(tod.da[0])
         plt.show()
 
+def add_noise(tod):
+    """
+    add white noise to the tod, the noise level is about 300uk*sqrt(s)
+    as we know that, the source emission is about 260K, which is very larger than noise.
+    :param tod:
+    :return:
+    """
+    pass
+
 # @time_consuming
 def scanfile_gen(mmp, checkopt=False):
     """
@@ -212,7 +221,7 @@ def tod_sim_old(tod, fp, mmp, dk):
     # for ch_idx in range(10):
         print('detector index', ch_idx)
         # calculate the beam map
-        bm = beam_map_func('', fp, mmp, ch_idx)
+        bm = beam_map_func(None, fp, mmp, ch_idx)
         # find the index which are close to the point source
         # idx = np.logical_and(np.abs(tod.px_altaz_az[ch_idx]-mmp.az_ref)<8*mmp.fwhm, np.abs(tod.px_altaz_el[ch_idx]-mmp.el_ref)<8*mmp.el_ref)
         idx = np.where(np.logical_and(np.abs(tod.px_altaz_az[ch_idx] - mmp.az_ref) < 9 * mmp.fwhm,
@@ -295,19 +304,19 @@ def tod_sim_faster(tod, fp, mmp, dk4filename):
 
     for ch_idx in range(fp.lenfp):
         print('detector index', ch_idx)
+        # this is temperary, in the real case, for each detector we need a beam file
+        bmfilename = '../Data/Map/Input/BM_Map/POPBeammap_0.0000_0.0000.txt'
+        bmfilename = None
         # calculate the beam map
-        bm = beam_map_func('', fp, mmp, ch_idx, sopt=True)
+        bm = beam_map_func(bmfilename, fp, mmp, ch_idx, sopt=True)
         # find the index which are close to the point source
         az = tod.px_altaz_az[ch_idx]
         el = tod.px_altaz_el[ch_idx]
         dk = tod.px_dk[ch_idx]
-        scale = 6 # this scale can be changed to make sure for each dk angle, the beam will cover.....
         # this idx is for choose the az and el which is close to the beam center, here we choose a rectangular,
         # or we can use circular.
-        idx = np.logical_and(az - mmp.az_ref < mmp.xmax - scale * mmp.xstep,
-                             np.logical_and(az - mmp.az_ref > mmp.xmin + scale * mmp.xstep,
-                                            np.logical_and(el - mmp.el_ref < mmp.ymax - scale * mmp.ystep,
-                                                           el - mmp.el_ref > mmp.ymin + scale * mmp.ystep)))
+        r_critical = mmp.n_sigma/2*mmp.sigma
+        idx = (((az-mmp.az_ref)**2+(el-mmp.el_ref)**2)<r_critical**2)
         az1 = az[idx]
         el1 = el[idx]
         dk1 = dk[idx]
@@ -319,10 +328,8 @@ def tod_sim_faster(tod, fp, mmp, dk4filename):
         az_idx = ((az_bmcoord-mmp.xmin)/mmp.xstep).astype(np.int)
         el_idx = ((el_bmcoord - mmp.ymin) / mmp.ystep).astype(np.int)
         print(np.max(el_idx), np.max(az_idx))
-        Ba = np.reshape(bm.Ba, (mmp.ny, mmp.nx))
-        Bb = np.reshape(bm.Bb, (mmp.ny, mmp.nx))
-        tod.da[ch_idx,idx] = Ba[el_idx, az_idx]*scale_fac0[idx]
-        tod.db[ch_idx, idx] = Bb[el_idx, az_idx] * scale_fac0[idx]
+        tod.da[ch_idx,idx] = bm.Ba[el_idx, az_idx]*scale_fac0[idx]
+        tod.db[ch_idx, idx] = bm.Bb[el_idx, az_idx] * scale_fac0[idx]
         ground_pickup(tod, ch_idx)
         if 0:
             # this can be use to check wheter our simulation is right or not

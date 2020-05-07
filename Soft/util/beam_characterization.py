@@ -90,12 +90,12 @@ def beam_mapmaking_on_detector(tod, mmp, fp, ch_idx, dk4filename):
     dk = tod.px_dk[ch_idx]
     da = np.copy(tod.da[ch_idx])
     # plot the tod data to check
-    plt.plot(tod.da[ch_idx, int(4.5e6):int(5e6)])
-    plt.show()
+    # plt.plot(tod.da[ch_idx, int(4.4e6):int(5.1e6)])
+    # plt.show()
     # first remove the ground emission
     da = filter_tod(da, mmp)
-    plt.plot(da[int(4.5e6):int(5e6)])
-    plt.show()
+    # plt.plot(da[int(4.4e6):int(5.1e6)])
+    # plt.show()
     # we need demodulate the tod
     f = mmp.srcopt
     step = int(mmp.f_sample / f)
@@ -106,8 +106,10 @@ def beam_mapmaking_on_detector(tod, mmp, fp, ch_idx, dk4filename):
     az = az[idx4demodul]
     el = el[idx4demodul]
     dk = dk[idx4demodul]
-    scale = 7
-    ind = np.logical_and(az-mmp.az_ref < mmp.xmax-scale*mmp.xstep, np.logical_and(az-mmp.az_ref > mmp.xmin+scale*mmp.xstep, np.logical_and(el-mmp.el_ref < mmp.ymax-scale*mmp.ystep, el-mmp.el_ref > mmp.ymin+scale*mmp.ystep)))
+    # scale = 7
+    # ind = np.logical_and(az-mmp.az_ref < mmp.xmax-scale*mmp.xstep, np.logical_and(az-mmp.az_ref > mmp.xmin+scale*mmp.xstep, np.logical_and(el-mmp.el_ref < mmp.ymax-scale*mmp.ystep, el-mmp.el_ref > mmp.ymin+scale*mmp.ystep)))
+    r_critical = mmp.n_sigma *5/12 * mmp.sigma
+    ind = (((az - mmp.az_ref) ** 2 + (el - mmp.el_ref) ** 2) < r_critical ** 2)
     az1 = az[ind]
     el1 = el[ind]
     dk1 = dk[ind]

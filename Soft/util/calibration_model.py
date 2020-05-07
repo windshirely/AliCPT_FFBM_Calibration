@@ -61,7 +61,7 @@ class Mission_Model_Parameters(Scan_Model, PinkNoiseParams):
         self.toddir = '../Data/TOD/'
         self.bmdir = '../Data/Map/'
         # self.srcopt = 'const' # describe the emission property of the source, can be 'const' or some Hz
-        self.srcopt = 10
+        self.srcopt = 20
         # for healpix map nside, if we just want to use camb to simute map as our input map, this parameter will be used
         self.nside_in = 1024
         # map input
@@ -72,10 +72,10 @@ class Mission_Model_Parameters(Scan_Model, PinkNoiseParams):
         self.height = 5250
         self.D = 0.72 #meter
         # frequncy
-        self.freq = 150
+        self.freq = 95
         self.fwhm = 1.22*(3e8/(self.freq*1e9))/(self.D)
         self.sigma = self.fwhm/(2*np.sqrt(2*np.log(2)))
-        print(self.sigma*180/np.pi*60)
+        # print(self.sigma*180/np.pi*60)
         # input()
         # other parameters for simulation
         self.bmsys_opt = False
@@ -83,18 +83,20 @@ class Mission_Model_Parameters(Scan_Model, PinkNoiseParams):
         self.t_atm_zenith = 10 # KCMB
         # chunck the tod into different file
         self.chunk_size = 6 * 60  # 6 minutes
-        self.nbin_bm_in = 100
-        self.nbin_bm_out = 40
-        self.nx = self.nbin_bm_out
-        self.ny = self.nbin_bm_out
-        self.xstep = 12*self.sigma/self.nx
-        self.ystep = 12*self.sigma/self.ny
+        self.nbin_bm = 50
+        self.nx = self.nbin_bm
+        self.ny = self.nbin_bm
+        # number of sigma that the beam pattern range
+        n_sigma = 12
+        self.n_sigma = n_sigma
+        self.xstep = n_sigma*self.sigma/self.nx
+        self.ystep = n_sigma*self.sigma/self.ny
         if src_center_opt:
-            self.xrange = np.arange(-5*self.sigma, 5*self.sigma, self.xstep)+self.az_ref
-            self.yrange = np.arange(-5 * self.sigma, 5 * self.sigma, self.ystep)+self.el_ref
+            self.xrange = np.arange(-n_sigma/2*self.sigma, n_sigma/2*self.sigma, self.xstep)+self.az_ref
+            self.yrange = np.arange(-n_sigma/2 * self.sigma, n_sigma/2 * self.sigma, self.ystep)+self.el_ref
         else:
-            self.xrange = np.arange(-6*self.sigma, 6*self.sigma, self.xstep)
-            self.yrange = np.arange(-6 * self.sigma, 6 * self.sigma, self.ystep)
+            self.xrange = np.arange(-n_sigma/2*self.sigma, n_sigma/2*self.sigma, self.xstep)
+            self.yrange = np.arange(-n_sigma/2 * self.sigma, n_sigma/2 * self.sigma, self.ystep)
         self.xmin = np.min(self.xrange)
         self.xmax = np.max(self.xrange)
         self.ymin = np.min(self.yrange)

@@ -56,7 +56,9 @@ def beam_parameter_fit(fp, mmp):
         # print(pcov)
         print(sigma*180/np.pi*60)
         print(pv)
-        bm_in_obj = beam_map_func(None, fp, mmp, i, sopt=True)
+        bmfilename = '../Data/Map/Input/BM_Map/POPBeammap_0.0000_0.0000.txt'
+        bmfilename = None
+        bm_in_obj = beam_map_func(bmfilename, fp, mmp, i, sopt=True)
         bm_in = np.reshape(bm_in_obj.Ba, (mmp.ny, mmp.nx))
         pltopt = 1
         if pltopt:
@@ -68,7 +70,7 @@ def beam_parameter_fit(fp, mmp):
 def bmparams_fit(bm):
     # we have [A, sigma, xc, yc, p, c] parameters to fit
     A0 = 1
-    sigma0 = 5. / 60 * np.pi / 180
+    sigma0 = 5 / 60 * np.pi / 180
     xc0 = 0
     yc0 = 0
     p0 = 0
@@ -76,10 +78,7 @@ def bmparams_fit(bm):
     factor_tmp = np.pi / 180
     p0 = [A0, sigma0, xc0, yc0, p0, c0]
     lower = np.array([1e-5, 1. / 60 * factor_tmp, -1 * factor_tmp, -1 * factor_tmp, -1, -1])
-    upper = np.array([1, 6. / 60 * factor_tmp, 1 * factor_tmp, 1 * factor_tmp, 3, 1])
-    # p0 = [A0, sigma0]
-    # lower = np.array([1e-2, 1./60*factor_tmp])
-    # upper = np.array([10, 6./60*factor_tmp])
+    upper = np.array([1, 10 / 60 * factor_tmp, 1 * factor_tmp, 1 * factor_tmp, 3, 1])
     pv, pcov = curve_fit(bm_func, bm, bm.map.flatten(), p0=p0, bounds=(lower, upper), check_finite=True)
     return pv, pcov
 
@@ -95,9 +94,6 @@ def beam_combination(fp, mmp, dks):
             else:
                 bm += bm_data.map
             j += 1
-            # rotate the map
-            # from scipy import ndimage
-            # bmi = ndimage.rotate(bm_data.map, dk*180/np.pi, reshape=False)
         bm = bm/np.max(bm)
         bm_obj = BM()
         bm_obj.map = bm
@@ -109,7 +105,9 @@ def beam_combination(fp, mmp, dks):
         # plt.imshow(bm, extent=[np.min(bm_data.bm_x)*180/np.pi, np.max(bm_data.bm_x)*180/np.pi, np.min(bm_data.bm_y)*180/np.pi, np.max(bm_data.bm_y)*180/np.pi, ], cmap=cmap)
         # plt.show()
         # compare with input beam
-        bm_in_obj = beam_map_func(None, fp, mmp, i, sopt=True)
+        bmfilename = '../Data/Map/Input/BM_Map/POPBeammap_0.0000_0.0000.txt'
+        bmfilename = None
+        bm_in_obj = beam_map_func(bmfilename, fp, mmp, i, sopt=True)
         bm_in = np.reshape(bm_in_obj.Ba, (mmp.ny, mmp.nx))
         bmplot(mmp, bm_in, bm)
 
@@ -124,6 +122,5 @@ if __name__=='__main__':
     dks = np.array([0, 45, 90, 135, 180])
     # dks = [0]
     # beam_charc(fp, mmp, dks)
-
     # beam_combination(fp, mmp, dks)
     beam_parameter_fit(fp, mmp)
